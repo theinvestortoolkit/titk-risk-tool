@@ -303,11 +303,19 @@
   };
 
   const BUCKET_META = {
-    cash:   { label: 'Cash',        color: '#3b82f6' },
-    income: { label: 'Income',      color: '#10b981' },
-    re:     { label: 'Real Estate', color: '#f59e0b' },
-    growth: { label: 'Growth',      color: '#8b5cf6' }
+    cash:   { label: 'Cash',        color: '#3b82f6', proxy: 'SHY' },
+    income: { label: 'Income',      color: '#10b981', proxy: 'SPXX' },
+    re:     { label: 'Real Estate', color: '#f59e0b', proxy: 'VNQ' },
+    growth: { label: 'Growth',      color: '#8b5cf6', proxy: 'SPY' }
   };
+
+  const HISTORICAL_DATA_URL = 'https://raw.githubusercontent.com/theinvestortoolkit/titk-risk-tool/main/data/historical.json';
+  let historicalData = null;
+  let historicalDataError = null;
+  const historicalDataPromise = fetch(HISTORICAL_DATA_URL)
+    .then(res => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+    .then(json => { historicalData = json; })
+    .catch(err => { historicalDataError = err; console.error('Failed to load historical risk data, falling back to placeholder series:', err); });
 
   // TODO(draft copy, per spec Section 8 open item): finalize per-score description language.
   const SCORE_DESCRIPTIONS = {
@@ -323,9 +331,42 @@
     10: 'You want maximum growth exposure and can withstand severe, prolonged drawdowns.'
   };
 
-  // Placeholder synthetic series until the titk-risk-tool historical data pipeline is live.
-  // Real implementation fetches a static JSON (SHY/SPXX/VNQ/SPY daily total-return series)
-  // and blends it per-score using ALLOCATIONS above.
+  // Real 20-year blend: fetched historical.json holds a growth-of-$1 index per proxy
+  // ticker (SHY/SPXX/VNQ/SPY). Blend per-score allocation with monthly rebalancing to
+  // target weights, matching the "Infinity" framework's fixed allocation-per-score model.
+  function buildRealSeries(score) {
+    const alloc = ALLOCATIONS[score];
+    const dates = historicalData.dates;
+    const idx = historicalData.index;
+    const proxies = Object.keys(BUCKET_META).map(k => BUCKET_META[k].proxy);
+    const bucketWeight = {};
+    Object.keys(BUCKET_META).forEach(k => { bucketWeight[BUCKET_META[k].proxy] = alloc[k] / 100; });
+
+    const bucketValue = {};
+    proxies.forEach(p => { bucketValue[p] = 10000 * bucketWeight[p]; });
+
+    const portSeries = [10000];
+    let prevMonth = dates[0].slice(0, 7);
+    for (let i = 1; i < dates.length; i++) {
+      proxies.forEach(p => { bucketValue[p] *= idx[p][i] / idx[p][i - 1]; });
+      const total = proxies.reduce((sum, p) => sum + bucketValue[p], 0);
+      portSeries.push(total);
+
+      const month = dates[i].slice(0, 7);
+      if (month !== prevMonth) {
+        proxies.forEach(p => { bucketValue[p] = total * bucketWeight[p]; });
+        prevMonth = month;
+      }
+    }
+
+    const spySeries = idx.SPY.map(v => 10000 * v);
+    const labels = dates.map((d, i) => (i === 0 || d.slice(0, 4) !== dates[i - 1].slice(0, 4)) ? d.slice(0, 4) : '');
+
+    return { labels, portSeries, spySeries };
+  }
+
+  // Placeholder synthetic series — used only if the historical.json fetch fails
+  // (e.g. GitHub outage, first run before the pipeline has ever committed data).
   function buildPlaceholderSeries(score) {
     const years = 20;
     const points = years * 12;
@@ -357,14 +398,14 @@
     return { labels, portSeries, spySeries };
   }
 
-  function computeStats(series) {
-    const monthlyReturns = [];
+  function computeStats(series, periodsPerYear) {
+    const periodReturns = [];
     for (let i = 1; i < series.length; i++) {
-      monthlyReturns.push(series[i] / series[i - 1] - 1);
+      periodReturns.push(series[i] / series[i - 1] - 1);
     }
-    const mean = monthlyReturns.reduce((a, b) => a + b, 0) / monthlyReturns.length;
-    const variance = monthlyReturns.reduce((a, b) => a + (b - mean) ** 2, 0) / monthlyReturns.length;
-    const annualVol = Math.sqrt(variance) * Math.sqrt(12);
+    const mean = periodReturns.reduce((a, b) => a + b, 0) / periodReturns.length;
+    const variance = periodReturns.reduce((a, b) => a + (b - mean) ** 2, 0) / periodReturns.length;
+    const annualVol = Math.sqrt(variance) * Math.sqrt(periodsPerYear);
 
     let peak = series[0], maxDD = 0;
     for (const v of series) {
@@ -416,13 +457,18 @@
     unansweredNote.style.display = 'none';
   }
 
-  submitBtn.addEventListener('click', () => {
+  submitBtn.addEventListener('click', async () => {
     const answered = Object.keys(answers).length;
     if (answered < QUESTIONS.length) {
       unansweredNote.textContent = `Please answer all ${QUESTIONS.length} questions (${QUESTIONS.length - answered} remaining).`;
       unansweredNote.style.display = 'block';
       return;
     }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Loading 20-year data...';
+    await historicalDataPromise;
+    submitBtn.textContent = 'See My Score';
+    submitBtn.disabled = false;
     showResults();
   });
 
@@ -449,11 +495,17 @@
       `;
     }).join('');
 
-    const { labels, portSeries, spySeries } = buildPlaceholderSeries(score);
-    const stats = computeStats(portSeries);
+    const usingRealData = !!historicalData;
+    const { labels, portSeries, spySeries } = usingRealData ? buildRealSeries(score) : buildPlaceholderSeries(score);
+    const stats = computeStats(portSeries, usingRealData ? 252 : 12);
     document.getElementById('tr-stat-final').textContent = '$' + Math.round(stats.final).toLocaleString();
     document.getElementById('tr-stat-vol').textContent = (stats.annualVol * 100).toFixed(1) + '%';
     document.getElementById('tr-stat-dd').textContent = (stats.maxDD * 100).toFixed(1) + '%';
+
+    const chartNote = document.querySelector('#titk-risk-tool .chart-note');
+    chartNote.textContent = usingRealData
+      ? `Your allocation vs. the S&P 500, synthetic backtest using historical bucket proxies (${historicalData.start_date} to ${historicalData.end_date}).`
+      : 'Historical data is temporarily unavailable — showing an illustrative estimate, not real market history.';
 
     const ctx = document.getElementById('tr-chart').getContext('2d');
     if (chartInstance) chartInstance.destroy();
