@@ -441,6 +441,18 @@
     return { annualVol, maxDD, final: series[series.length - 1] };
   }
 
+  // Notifies the parent WordPress page of height changes so it can resize the
+  // embedding iframe (quiz -> results is a large height jump). No-op if not framed.
+  let lastNotifiedHeight = 0;
+  function notifyHeight() {
+    if (window.parent === window) return;
+    const height = document.documentElement.scrollHeight;
+    if (height !== lastNotifiedHeight) {
+      lastNotifiedHeight = height;
+      window.parent.postMessage({ type: 'titk-risk-tool-resize', height }, '*');
+    }
+  }
+
   const answers = {};
   const form = document.getElementById('tr-form');
   const progressFill = document.getElementById('tr-progress');
@@ -556,6 +568,7 @@
 
     document.getElementById('tr-results').classList.add('visible');
     document.getElementById('tr-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    notifyHeight();
   }
 
   document.getElementById('tr-restart').addEventListener('click', () => {
@@ -565,7 +578,15 @@
     updateProgress();
     document.getElementById('tr-results').classList.remove('visible');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    notifyHeight();
   });
+
+  // Backup signal for reflows notifyHeight() calls above don't cover (font load, chart
+  // resize, window resize) — the explicit calls are the reliable primary mechanism.
+  if (window.parent !== window) {
+    new ResizeObserver(notifyHeight).observe(document.body);
+    window.addEventListener('load', notifyHeight);
+  }
 })();
 </script>
 </body>
