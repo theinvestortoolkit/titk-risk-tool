@@ -1,0 +1,493 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+<style>
+  #titk-risk-tool * { box-sizing: border-box; }
+  #titk-risk-tool {
+    background: #000000;
+    color: #e5e5e5;
+    font-family: 'Inter', sans-serif;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+  }
+  #titk-risk-tool h1 {
+    font-size: 1.5rem;
+    color: #ffffff;
+    margin-bottom: 4px;
+  }
+  #titk-risk-tool .subtitle {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    margin-bottom: 28px;
+  }
+  #titk-risk-tool .progress-track {
+    height: 6px;
+    background: #1a1a1a;
+    border: 1px solid #222222;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  #titk-risk-tool .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    transition: width 0.25s ease;
+  }
+  #titk-risk-tool .question-card {
+    background: #1a1a1a;
+    border: 1px solid #222222;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  #titk-risk-tool .q-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8b5cf6;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  #titk-risk-tool .q-text {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 14px;
+  }
+  #titk-risk-tool .q-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #titk-risk-tool .q-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #0a0a0a;
+    border: 1px solid #222222;
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  #titk-risk-tool .q-option:hover { border-color: #3b82f6; }
+  #titk-risk-tool .q-option.selected {
+    border-color: #8b5cf6;
+    background: #16121f;
+  }
+  #titk-risk-tool .q-option input { accent-color: #8b5cf6; }
+  #titk-risk-tool .q-option span { font-size: 0.92rem; color: #d1d5db; }
+
+  #titk-risk-tool .submit-row { margin-top: 24px; text-align: center; }
+  #titk-risk-tool button.primary {
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 32px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #titk-risk-tool button.primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  #titk-risk-tool .unanswered-note {
+    color: #f59e0b;
+    font-size: 0.82rem;
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  #titk-risk-tool .results { display: none; margin-top: 40px; }
+  #titk-risk-tool .results.visible { display: block; }
+  #titk-risk-tool .score-card {
+    background: #1a1a1a;
+    border: 1px solid #222222;
+    border-radius: 12px;
+    padding: 28px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  #titk-risk-tool .score-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+  }
+  #titk-risk-tool .score-value span { color: #8b5cf6; }
+  #titk-risk-tool .score-label {
+    color: #9ca3af;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+  #titk-risk-tool .score-desc {
+    color: #d1d5db;
+    font-size: 0.95rem;
+    margin-top: 14px;
+  }
+
+  #titk-risk-tool .allocation-card {
+    background: #1a1a1a;
+    border: 1px solid #222222;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  #titk-risk-tool .allocation-card h3 {
+    color: #ffffff;
+    font-size: 0.95rem;
+    margin-bottom: 16px;
+  }
+  #titk-risk-tool .bucket-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  #titk-risk-tool .bucket-name {
+    width: 100px;
+    font-size: 0.85rem;
+    color: #d1d5db;
+    flex-shrink: 0;
+  }
+  #titk-risk-tool .bucket-bar-track {
+    flex: 1;
+    height: 10px;
+    background: #0a0a0a;
+    border: 1px solid #222222;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  #titk-risk-tool .bucket-bar-fill { height: 100%; border-radius: 999px; }
+  #titk-risk-tool .bucket-pct {
+    width: 48px;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+
+  #titk-risk-tool .chart-card {
+    background: #1a1a1a;
+    border: 1px solid #222222;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  #titk-risk-tool .chart-card h3 {
+    color: #ffffff;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+  }
+  #titk-risk-tool .chart-note {
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-bottom: 14px;
+  }
+  #titk-risk-tool .chart-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  #titk-risk-tool .stat {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  #titk-risk-tool .stat .stat-value { color: #ffffff; font-size: 1.1rem; font-weight: 700; }
+  #titk-risk-tool .stat .stat-label { color: #9ca3af; font-size: 0.72rem; text-transform: uppercase; }
+
+  #titk-risk-tool .restart-row { text-align: center; margin-top: 24px; }
+  #titk-risk-tool button.ghost {
+    background: transparent;
+    color: #9ca3af;
+    border: 1px solid #222222;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+</style>
+
+<div id="titk-risk-tool">
+  <h1>Risk Profile Calculator</h1>
+  <div class="subtitle">13 questions. Takes about 3 minutes. Your score drives a real, continuously-scaled portfolio allocation &mdash; not a generic bucket.</div>
+
+  <div class="progress-track"><div class="progress-fill" id="tr-progress"></div></div>
+
+  <form id="tr-form"></form>
+
+  <div class="submit-row">
+    <button type="button" class="primary" id="tr-submit" disabled>See My Score</button>
+    <div class="unanswered-note" id="tr-unanswered" style="display:none;"></div>
+  </div>
+
+  <div class="results" id="tr-results">
+    <div class="score-card">
+      <div class="score-label">Your Score</div>
+      <div class="score-value"><span id="tr-score-num">-</span> / 10</div>
+      <div class="score-desc" id="tr-score-desc"></div>
+    </div>
+
+    <div class="allocation-card">
+      <h3>Your Allocation</h3>
+      <div id="tr-buckets"></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>20-Year Growth of $10,000</h3>
+      <div class="chart-note">Your allocation vs. the S&amp;P 500, synthetic backtest using historical bucket proxies.</div>
+      <canvas id="tr-chart" height="220"></canvas>
+      <div class="chart-stats">
+        <div class="stat"><div class="stat-value" id="tr-stat-final">-</div><div class="stat-label">Ending Value</div></div>
+        <div class="stat"><div class="stat-value" id="tr-stat-vol">-</div><div class="stat-label">Ann. Volatility</div></div>
+        <div class="stat"><div class="stat-value" id="tr-stat-dd">-</div><div class="stat-label">Max Drawdown</div></div>
+      </div>
+    </div>
+
+    <div class="restart-row">
+      <button type="button" class="ghost" id="tr-restart">Retake Questionnaire</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const QUESTIONS = [
+    { id: 'q1', group: 'Tolerance', text: "Your portfolio drops 20% in a single month. What's your first instinct?",
+      options: [['Sell everything', 1], ['Sell some to reduce risk', 2], ['Hold and wait it out', 3], ['Buy more at the lower price', 4]] },
+    { id: 'q2', group: 'Tolerance', text: 'Which would you choose: a guaranteed $5,000 gain, or a 50/50 shot at $12,000 vs. $0?',
+      options: [['Guaranteed $5,000', 1], ['Take the 50/50', 4]] },
+    { id: 'q3', group: 'Tolerance', text: 'Which would you choose: a guaranteed $2,000 loss, or a 50/50 shot at losing $5,000 vs. losing nothing?',
+      options: [['Guaranteed loss', 1], ['Take the 50/50', 4]] },
+    { id: 'q4', group: 'Tolerance', text: 'During a market downturn, how do you typically react to financial news?',
+      options: [['Anxious, check constantly', 1], ['Somewhat concerned', 2], ['Mostly calm', 3], ['Curious, see it as opportunity', 4]] },
+    { id: 'q5', group: 'Tolerance', text: 'Which matters more to you as an investor?',
+      options: [['Protecting what I have', 1], ['A mix, leaning protect', 2], ['A mix, leaning grow', 3], ['Growing what I have', 4]] },
+    { id: 'q6', group: 'Tolerance', text: "$100,000 invested; a year later it's worth $70,000. What do you do?",
+      options: [['Sell and move to cash', 1], ['Sell part', 2], ['Hold', 3], ['Add more', 4]] },
+    { id: 'q7', group: 'Tolerance', text: 'How would you rate your investing experience?',
+      options: [['New to investing', 1], ['Some experience', 2], ['Experienced', 3], ['Very experienced', 4]] },
+    { id: 'q8', group: 'Capacity', text: "Years until you'll need to start withdrawing from this money?",
+      options: [['< 2 yrs', 1], ['2–5 yrs', 2], ['5–10 yrs', 3], ['10+ yrs', 4]] },
+    { id: 'q9', group: 'Capacity', text: 'If your investments underperform as you approach retirement, how flexible are you about adjusting your retirement timeline or lifestyle?',
+      options: [['Not flexible — I need to retire on schedule', 1], ['Some flexibility — work longer or trim expenses', 2], ['Flexible — comfortable adjusting my timeline', 3], ['Very flexible — not fixed to a number', 4]] },
+    { id: 'q10', group: 'Capacity', text: 'How stable is your income?',
+      options: [['Unstable / variable', 1], ['Somewhat stable', 2], ['Stable', 3], ['Very stable / secure', 4]] },
+    { id: 'q11', group: 'Capacity', text: 'Do you have money set aside outside this portfolio to cover expenses?',
+      options: [['No emergency fund', 1], ['Less than 3 months of expenses', 2], ['3–12 months of expenses', 3], ['More than 12 months of expenses', 4]] },
+    { id: 'q12', group: 'Capacity', text: 'Do you depend on this portfolio for income, or do you have other income sources (job, pension, rental income, etc.)?',
+      options: [['This portfolio is my only income', 1], ['I rely on it for most of my income', 2], ['I have some other income, but this matters too', 3], ['I have substantial income from other sources', 4]] },
+    { id: 'q13', group: 'Capacity', text: 'How would a 30% decline affect your ability to meet financial goals/obligations?',
+      options: [['Severely', 1], ['Moderately', 2], ['Minimally', 3], ['Not at all', 4]] }
+  ];
+
+  const ALLOCATIONS = {
+    1:  { cash: 35, income: 40, re: 15, growth: 10 },
+    2:  { cash: 28, income: 38, re: 19, growth: 15 },
+    3:  { cash: 22, income: 36, re: 23, growth: 19 },
+    4:  { cash: 16, income: 34, re: 27, growth: 23 },
+    5:  { cash: 10, income: 30, re: 30, growth: 30 },
+    6:  { cash: 8,  income: 27, re: 30, growth: 35 },
+    7:  { cash: 6,  income: 23, re: 29, growth: 42 },
+    8:  { cash: 5,  income: 19, re: 27, growth: 49 },
+    9:  { cash: 4,  income: 15, re: 25, growth: 56 },
+    10: { cash: 3,  income: 10, re: 22, growth: 65 }
+  };
+
+  const BUCKET_META = {
+    cash:   { label: 'Cash',        color: '#3b82f6' },
+    income: { label: 'Income',      color: '#10b981' },
+    re:     { label: 'Real Estate', color: '#f59e0b' },
+    growth: { label: 'Growth',      color: '#8b5cf6' }
+  };
+
+  // TODO(draft copy, per spec Section 8 open item): finalize per-score description language.
+  const SCORE_DESCRIPTIONS = {
+    1: 'You prioritize capital preservation above growth and want minimal exposure to market swings.',
+    2: 'You lean strongly toward protecting what you have, with only modest room for growth.',
+    3: 'You favor stability, accepting limited growth in exchange for a smoother ride.',
+    4: 'You want a cautious balance, weighted toward protection but open to some upside.',
+    5: 'You want a balanced mix of protection and growth — the baseline Infinity allocation.',
+    6: 'You lean toward growth while still keeping meaningful ballast in income and real assets.',
+    7: 'You favor growth and can tolerate real drawdowns in exchange for higher long-run returns.',
+    8: 'You want your portfolio working hard for growth, with only a thin cash/income cushion.',
+    9: 'You are comfortable with significant volatility in pursuit of long-term compounding.',
+    10: 'You want maximum growth exposure and can withstand severe, prolonged drawdowns.'
+  };
+
+  // Placeholder synthetic series until the titk-risk-tool historical data pipeline is live.
+  // Real implementation fetches a static JSON (SHY/SPXX/VNQ/SPY daily total-return series)
+  // and blends it per-score using ALLOCATIONS above.
+  function buildPlaceholderSeries(score) {
+    const years = 20;
+    const points = years * 12;
+    const growthWeight = ALLOCATIONS[score].growth / 100;
+    const portfolioDrift = 0.05 + growthWeight * 0.05;
+    const portfolioVol = 0.03 + growthWeight * 0.06;
+    const spyDrift = 0.095;
+    const spyVol = 0.15;
+
+    let portVal = 10000, spyVal = 10000;
+    const portSeries = [portVal], spySeries = [spyVal];
+    let seed = score * 7919;
+    function rand() {
+      seed = (seed * 9301 + 49297) % 233280;
+      return seed / 233280;
+    }
+    for (let i = 1; i <= points; i++) {
+      const pShock = (rand() - 0.5) * 2 * portfolioVol;
+      const sShock = (rand() - 0.5) * 2 * spyVol;
+      portVal *= (1 + portfolioDrift / 12 + pShock / Math.sqrt(12));
+      spyVal *= (1 + spyDrift / 12 + sShock / Math.sqrt(12));
+      portSeries.push(portVal);
+      spySeries.push(spyVal);
+    }
+    const labels = portSeries.map((_, i) => {
+      const y = Math.floor(i / 12);
+      return i % 12 === 0 ? String(new Date().getFullYear() - years + y) : '';
+    });
+    return { labels, portSeries, spySeries };
+  }
+
+  function computeStats(series) {
+    const monthlyReturns = [];
+    for (let i = 1; i < series.length; i++) {
+      monthlyReturns.push(series[i] / series[i - 1] - 1);
+    }
+    const mean = monthlyReturns.reduce((a, b) => a + b, 0) / monthlyReturns.length;
+    const variance = monthlyReturns.reduce((a, b) => a + (b - mean) ** 2, 0) / monthlyReturns.length;
+    const annualVol = Math.sqrt(variance) * Math.sqrt(12);
+
+    let peak = series[0], maxDD = 0;
+    for (const v of series) {
+      if (v > peak) peak = v;
+      const dd = (v - peak) / peak;
+      if (dd < maxDD) maxDD = dd;
+    }
+    return { annualVol, maxDD, final: series[series.length - 1] };
+  }
+
+  const answers = {};
+  const form = document.getElementById('tr-form');
+  const progressFill = document.getElementById('tr-progress');
+  const submitBtn = document.getElementById('tr-submit');
+  const unansweredNote = document.getElementById('tr-unanswered');
+
+  QUESTIONS.forEach((q, idx) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.innerHTML = `
+      <div class="q-label">${q.group} &middot; ${idx + 1} of ${QUESTIONS.length}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="q-options">
+        ${q.options.map(([label, pts], i) => `
+          <label class="q-option" data-q="${q.id}" data-idx="${i}">
+            <input type="radio" name="${q.id}" value="${pts}">
+            <span>${label}</span>
+          </label>
+        `).join('')}
+      </div>
+    `;
+    form.appendChild(card);
+  });
+
+  form.addEventListener('change', (e) => {
+    if (e.target.type !== 'radio') return;
+    const name = e.target.name;
+    answers[name] = parseInt(e.target.value, 10);
+    form.querySelectorAll(`.q-option[data-q="${name}"]`).forEach(opt => {
+      opt.classList.toggle('selected', opt.querySelector('input').checked);
+    });
+    updateProgress();
+  });
+
+  function updateProgress() {
+    const answered = Object.keys(answers).length;
+    progressFill.style.width = (answered / QUESTIONS.length * 100) + '%';
+    submitBtn.disabled = answered < QUESTIONS.length;
+    unansweredNote.style.display = 'none';
+  }
+
+  submitBtn.addEventListener('click', () => {
+    const answered = Object.keys(answers).length;
+    if (answered < QUESTIONS.length) {
+      unansweredNote.textContent = `Please answer all ${QUESTIONS.length} questions (${QUESTIONS.length - answered} remaining).`;
+      unansweredNote.style.display = 'block';
+      return;
+    }
+    showResults();
+  });
+
+  let chartInstance = null;
+
+  function showResults() {
+    const rawTotal = Object.values(answers).reduce((a, b) => a + b, 0);
+    const score = Math.min(10, Math.max(1, Math.round(1 + 9 * (rawTotal - 13) / (52 - 13))));
+
+    document.getElementById('tr-score-num').textContent = score;
+    document.getElementById('tr-score-desc').textContent = SCORE_DESCRIPTIONS[score];
+
+    const alloc = ALLOCATIONS[score];
+    const bucketsEl = document.getElementById('tr-buckets');
+    bucketsEl.innerHTML = Object.keys(BUCKET_META).map(key => {
+      const meta = BUCKET_META[key];
+      const pct = alloc[key];
+      return `
+        <div class="bucket-row">
+          <div class="bucket-name">${meta.label}</div>
+          <div class="bucket-bar-track"><div class="bucket-bar-fill" style="width:${pct}%;background:${meta.color};"></div></div>
+          <div class="bucket-pct">${pct}%</div>
+        </div>
+      `;
+    }).join('');
+
+    const { labels, portSeries, spySeries } = buildPlaceholderSeries(score);
+    const stats = computeStats(portSeries);
+    document.getElementById('tr-stat-final').textContent = '$' + Math.round(stats.final).toLocaleString();
+    document.getElementById('tr-stat-vol').textContent = (stats.annualVol * 100).toFixed(1) + '%';
+    document.getElementById('tr-stat-dd').textContent = (stats.maxDD * 100).toFixed(1) + '%';
+
+    const ctx = document.getElementById('tr-chart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Your Allocation', data: portSeries, borderColor: '#8b5cf6', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.15 },
+          { label: 'S&P 500', data: spySeries, borderColor: '#3b82f6', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.15 }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: '#d1d5db' } } },
+        scales: {
+          x: { ticks: { color: '#6b7280', maxRotation: 0 }, grid: { color: '#1a1a1a' } },
+          y: { ticks: { color: '#6b7280', callback: v => '$' + Number(v).toLocaleString() }, grid: { color: '#1a1a1a' } }
+        }
+      }
+    });
+
+    document.getElementById('tr-results').classList.add('visible');
+    document.getElementById('tr-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('tr-restart').addEventListener('click', () => {
+    Object.keys(answers).forEach(k => delete answers[k]);
+    form.querySelectorAll('input[type=radio]').forEach(r => r.checked = false);
+    form.querySelectorAll('.q-option').forEach(o => o.classList.remove('selected'));
+    updateProgress();
+    document.getElementById('tr-results').classList.remove('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+</script>
