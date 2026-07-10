@@ -342,18 +342,17 @@
     .then(json => { historicalData = json; })
     .catch(err => { historicalDataError = err; console.error('Failed to load historical risk data, falling back to placeholder series:', err); });
 
-  // TODO(draft copy, per spec Section 8 open item): finalize per-score description language.
   const SCORE_DESCRIPTIONS = {
-    1: 'You prioritize capital preservation above growth and want minimal exposure to market swings.',
-    2: 'You lean strongly toward protecting what you have, with only modest room for growth.',
-    3: 'You favor stability, accepting limited growth in exchange for a smoother ride.',
-    4: 'You want a cautious balance, weighted toward protection but open to some upside.',
-    5: 'You want a balanced mix of protection and growth — the baseline Infinity allocation.',
-    6: 'You lean toward growth while still keeping meaningful ballast in income and real assets.',
-    7: 'You favor growth and can tolerate real drawdowns in exchange for higher long-run returns.',
-    8: 'You want your portfolio working hard for growth, with only a thin cash/income cushion.',
-    9: 'You are comfortable with significant volatility in pursuit of long-term compounding.',
-    10: 'You want maximum growth exposure and can withstand severe, prolonged drawdowns.'
+    1: "Preserving what you have matters more than growing it — you'd rather sit out volatility than risk a real loss.",
+    2: 'You lean heavily toward protecting your money, keeping only a small slice reserved for growth.',
+    3: 'Steady, predictable progress appeals to you more than big swings, even at the cost of some upside.',
+    4: "You favor a cautious balance — protection comes first, but you're open to measured growth.",
+    5: 'An even mix of protection and growth suits you best — this is the baseline balanced allocation.',
+    6: "You're willing to lean into growth, as long as income and real assets provide some ballast.",
+    7: 'Growth is the priority for you, and you can stomach real drawdowns in exchange for stronger long-run returns.',
+    8: 'You want your money working hard for growth, with only a thin cushion of cash and income underneath.',
+    9: "Significant volatility doesn't rattle you — you're focused on long-term compounding, not short-term comfort.",
+    10: 'Maximum growth exposure is your goal, and you can ride out severe, prolonged drawdowns without flinching.'
   };
 
   // Real 20-year blend: fetched historical.json holds a growth-of-$1 index per proxy
