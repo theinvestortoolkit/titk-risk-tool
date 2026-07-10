@@ -204,6 +204,17 @@
   #titk-risk-tool .stat .stat-value { color: #ffffff; font-size: 1.1rem; font-weight: 700; }
   #titk-risk-tool .stat .stat-label { color: #9ca3af; font-size: 0.72rem; text-transform: uppercase; }
 
+  #titk-risk-tool .disclaimer {
+    border-top: 1px solid #222222;
+    margin-top: 24px;
+    padding-top: 16px;
+    color: #6b7280;
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+  #titk-risk-tool .disclaimer p { margin: 0 0 8px; }
+  #titk-risk-tool .disclaimer p:last-child { margin-bottom: 0; }
+
   #titk-risk-tool .restart-row { text-align: center; margin-top: 24px; }
   #titk-risk-tool button.ghost {
     background: transparent;
@@ -250,6 +261,11 @@
         <div class="stat"><div class="stat-value" id="tr-stat-vol">-</div><div class="stat-label">Ann. Volatility</div></div>
         <div class="stat"><div class="stat-value" id="tr-stat-dd">-</div><div class="stat-label">Max Drawdown</div></div>
       </div>
+    </div>
+
+    <div class="disclaimer">
+      <p><strong>Educational tool only — not personalized investment advice.</strong> Your score and allocation are generated from your questionnaire answers using a fixed scoring model; they do not account for your complete financial picture and should not be the sole basis for any investment decision.</p>
+      <p>The chart above is a <strong>hypothetical, synthetic backtest</strong>, not the actual performance of any fund, account, or strategy. It blends historical price data for a single representative ETF per bucket (Cash: SHY, Income: SPXX, Real Estate: VNQ, Growth: SPY), rebalanced monthly back to your target weights. Real-world results would differ due to fees, taxes, timing, slippage, and the fact that no product tracks this exact blend. <strong>Past performance does not guarantee or predict future results.</strong></p>
     </div>
 
     <div class="restart-row">
