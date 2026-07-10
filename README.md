@@ -1,13 +1,13 @@
 # titk-risk-tool
 
-Risk Profile Calculator for members.theinvestortoolkit.com — 13-question questionnaire,
+Bucket Allocation Profiler for members.theinvestortoolkit.com — 13-question questionnaire,
 1–10 blended tolerance/capacity score, four-bucket ("Infinity" framework) portfolio
 allocation, and a 20-year synthetic backtest vs. the S&P 500.
 
 ## Structure
 
 - `frontend/index.html` — standalone HTML document (has its own doctype/head/body).
-  Deploy as `index.html` in a new Bluehost subfolder (e.g. `/calculators/risk-profile/`,
+  Deploy as `index.html` in a new Bluehost subfolder (e.g. `/calculators/bucket-allocation-profiler/`,
   matching the CC/CSP calculator convention: always a new folder, never overwrite) and
   embed via `<iframe>` on a PMPro-protected WordPress page — required for any tool using
   Chart.js per the site's established embedding rules. Fetches `data/historical.json`
@@ -27,8 +27,8 @@ posts a `titk-risk-tool-resize` message with its current height whenever framed.
 iframe plus this small listener in the page's Elementor HTML widget (or a WPCode snippet):
 
 ```html
-<iframe id="titk-risk-tool-frame" src="https://members.theinvestortoolkit.com/calculators/risk-profile/"
-        style="width:100%; border:none; display:block;" title="Risk Profile Calculator"></iframe>
+<iframe id="titk-risk-tool-frame" src="https://members.theinvestortoolkit.com/calculators/bucket-allocation-profiler/"
+        style="width:100%; border:none; display:block;" title="Bucket Allocation Profiler"></iframe>
 <script>
 window.addEventListener('message', function (e) {
   if (e.data && e.data.type === 'titk-risk-tool-resize') {
